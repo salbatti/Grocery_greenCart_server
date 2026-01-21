@@ -7,34 +7,33 @@ export const sellerLogin = async (req, res) => {
 
     if (email == process.env.SELLER_EMAIL && password== process.env.SELLER_PASSWORD) {
         const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' })
-        res.cookie('token', token, {
+        res.cookie('sellerToken', token, {
             httpOnly: true, // Prevent JavaScript to access cookie
             secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // CSRF protection
             maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiration time
         });
-
         return res.json({ success: true, message: "Logged In" })
     }
     else {
-        return res.json({ succes: false, message: "Invalid Credentials" })
+        return res.json({ success: false, message: "Invalid Credentials" })
     }
    } catch (error) {
         console.log(error.message);
-        res.json({ succes: false, message: error.message })
+        res.json({ success: false, message: error.message })
    }
 }
 
 //Seller Auth :/api/seller/is-auth
 export const isSellerAuth = async (req, res) => {
     try {
-        return res.json({ success: true, user })
+        return res.json({ success: true })
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message })
     }
 }
-
+ 
 //Logout seller :/api/seller/logout
 
 export const sellerLogout = async (req, res) => {

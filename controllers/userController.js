@@ -74,8 +74,7 @@ export const login = async (req, res) => {
 //Check Auth :/api/user/is-auth
 export const isAuth = async (req, res) => {
     try {
-        const { userId } = req.body;
-        const user = await User.findById(userId).select("-password")
+        const user = await User.findById(req.userId).select("-password")
         return res.json({ success: true, user })
     } catch (error) {
         console.log(error.message);
@@ -90,7 +89,7 @@ export const logout = async (req, res) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         })
-        return res.json({ success: true,message:"Logged out"})
+        return res.json({ success: true, message: "Logged out" })
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message })

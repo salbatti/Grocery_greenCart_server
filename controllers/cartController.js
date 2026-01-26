@@ -3,10 +3,11 @@ import User from "../models/User.js"
 
 export const updateCart = async (req, res) => {
     try {
-        const { userId, cartItem } = req.body
+        const {cartItems } = req.body
+        const userId = req.userId
         //doubt
-        await User.findByIdAndUpdate(userId, { cartItem })
-        res.json({ success: false, message: "Cart Updated" })
+        await User.findByIdAndUpdate(userId, { cartItems })
+        res.json({ success: true, message: "Cart Updated" })
 
     } catch (error) {
         console.log(error.message);

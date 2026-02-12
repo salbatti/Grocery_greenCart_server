@@ -108,17 +108,19 @@ export const placeOrderStripe = async (req, res) => {
 export const getUserOrders = async (req, res) => {
     try {
         const userId = req.userId;
-        const orders = await Order.find({
-            userId, 
-            $or: [{ paymentType: 'COD' }, { isPaid: true }]
-        }).populate("items.product address").sort({ createdAt: -1 })
-        //Doubt in populate
+     
+        const orders = await Order.find({ userId }).populate("items.product address").sort({ createdAt: -1 });
+
+        // //Doubt in populate
         res.json({ success: true, orders })
     } catch (error) {
         // console.log(error.mesaage);
         return res.json({ success: false, mesaage: error.mesaage })
     }
 }
+
+
+
 
 //Get All Orders (for seller/admin) :/api/order/seller
 

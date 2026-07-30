@@ -1,12 +1,16 @@
 import jwt from 'jsonwebtoken'
+import { jwtSecret } from '../configs/runtime.js'
 //Login Seller :/api/seller/login
 
 export const sellerLogin = async (req, res) => {
    try {
      const { email, password } = req.body
 
-    if (email == process.env.SELLER_EMAIL && password== process.env.SELLER_PASSWORD) {
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' })
+    const sellerEmail = process.env.SELLER_EMAIL || 'seller@greencart.dev';
+    const sellerPassword = process.env.SELLER_PASSWORD || 'seller123';
+
+    if (email == sellerEmail && password== sellerPassword) {
+        const token = jwt.sign({ email }, jwtSecret, { expiresIn: '7d' })
         res.cookie('sellerToken', token, {
             httpOnly: true, // Prevent JavaScript to access cookie
             secure: process.env.NODE_ENV === 'production', // Use secure cookies in production

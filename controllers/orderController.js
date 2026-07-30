@@ -2,13 +2,37 @@
 import Order from "../models/Order.js"
 import Product from "../models/Product.js"
 import stripe from "stripe"
+import { isDemoMode } from "../configs/runtime.js"
+import { createDemoId, demoOrders, demoProducts, demoUsers, hydrateOrder } from "../data/demoStore.js"
 // Place Order COD : /api/order/cod
 
 export const placeOrderCOD = async (req, res) => {
     try {
         const { userId, items, address } = req.body
         if (!address || items.length == 0) {
-            return res.json({ success: false, mesaage: "Invalid data" })
+            return res.json({ success: false, message: "Invalid data" })
+        }
+        if (isDemoMode) {
+            let amount = items.reduce((sum, item) => {
+                const product = demoProducts.find((product) => product._id === item.product);
+                return sum + (product?.offerPrice || 0) * item.quantity;
+            }, 0);
+            amount += Math.floor(amount * 0.02);
+            demoOrders.unshift({
+                _id: createDemoId("order"),
+                userId,
+                items,
+                amount,
+                address,
+                status: "Order Placed",
+                paymentType: "COD",
+                isPaid: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            });
+            const user = demoUsers.find((item) => item._id === userId);
+            if (user) user.cartItems = {};
+            return res.json({ success: true, message: "Order placed successfully" })
         }
         //Calculate amount using Items
         //doubt how does async and await comes 
@@ -27,10 +51,10 @@ export const placeOrderCOD = async (req, res) => {
             address,
             paymentType: 'COD'
         });
-        return res.json({ success: true, message: "Order placed succesfully" })
+        return res.json({ success: true, message: "Order placed successfully" })
     } catch (error) {
-        console.log(error.mesaage);
-        return res.json({ success: false, mesaage: error.mesaage })
+        console.log(error.message);
+        return res.json({ success: false, message: error.message })
     }
 }
 
@@ -41,7 +65,10 @@ export const placeOrderStripe = async (req, res) => {
         const { userId, items, address } = req.body
         const {origin}=req.headers;
         if (!address || items.length == 0) {
-            return res.json({ success: false, mesaage: "Invalid data" })
+            return res.json({ success: false, message: "Invalid data" })
+        }
+        if (isDemoMode || !process.env.STRIPE_SECRET_KEY) {
+            return placeOrderCOD(req, res)
         }
 
         let productData = []
@@ -98,8 +125,8 @@ export const placeOrderStripe = async (req, res) => {
         })
         return res.json({ success: true,url:session.url })
     } catch (error) {
-        console.log(error.mesaage);
-        return res.json({ success: false, mesaage: error.mesaage })
+        console.log(error.message);
+        return res.json({ success: false, message: error.message })
     }
 }
 
@@ -108,6 +135,10 @@ export const placeOrderStripe = async (req, res) => {
 export const getUserOrders = async (req, res) => {
     try {
         const userId = req.userId;
+        if (isDemoMode) {
+            const orders = demoOrders.filter((order) => order.userId === userId).map(hydrateOrder)
+            return res.json({ success: true, orders })
+        }
      
         const orders = await Order.find({ userId }).populate("items.product address").sort({ createdAt: -1 });
 
@@ -115,7 +146,7 @@ export const getUserOrders = async (req, res) => {
         res.json({ success: true, orders })
     } catch (error) {
         // console.log(error.mesaage);
-        return res.json({ success: false, mesaage: error.mesaage })
+        return res.json({ success: false, message: error.message })
     }
 }
 
@@ -126,12 +157,17 @@ export const getUserOrders = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
     try {
+        if (isDemoMode) {
+            const orders = demoOrders.map(hydrateOrder)
+            return res.json({ success: true, orders })
+        }
+
         const orders = await Order.find({
             $or: [{ paymentType: 'COD' }, { isPaid: true }]
         }).populate("items.product address").sort({ createdAt: -1 })
         res.json({ success: true, orders })
     } catch (error) {
         // console.log(error.mesaage);
-        return res.json({ success: false, mesaage: error.mesaage })
+        return res.json({ success: false, message: error.message })
     }
 }

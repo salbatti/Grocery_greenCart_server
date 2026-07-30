@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { jwtSecret } from '../configs/runtime.js';
 const authUser = async (req, res, next) => {
     const { token } = req.cookies
 
@@ -6,7 +7,7 @@ const authUser = async (req, res, next) => {
         return res.json({ success: false, message: 'Not Authorized' });
     }
     try {
-        const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
+        const tokenDecode = jwt.verify(token, jwtSecret)
         if (tokenDecode.id) {
             req.userId = tokenDecode.id
         } else {

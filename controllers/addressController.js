@@ -1,10 +1,16 @@
 import Address from "../models/Address.js"
+import { isDemoMode } from "../configs/runtime.js"
+import { createDemoId, demoAddresses } from "../data/demoStore.js"
 
 // Add Address : /api/address/add
 export const addAddress = async (req, res) => {
     try {
         const { address } = req.body;
           const userId = req.userId
+        if (isDemoMode) {
+            demoAddresses.unshift({ ...address, _id: createDemoId("address"), userId })
+            return res.json({ success: true, message: "Address added successfully" })
+        }
         await Address.create({...address, userId})
         res.json({ success: true, message: "Address added successfully" })
     } catch (error) {
@@ -17,6 +23,10 @@ export const addAddress = async (req, res) => {
 export const getAddress = async (req, res) => {
     try {
         const userId = req.userId   
+        if (isDemoMode) {
+            const addresses = demoAddresses.filter((address) => address.userId === userId || address.userId === "demo-user")
+            return res.json({ success: true, addresses })
+        }
         const addresses = await Address.find({ userId })
         res.json({ success: true, addresses })
     } catch (error) {

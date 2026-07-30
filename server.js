@@ -9,6 +9,7 @@ import productRouter from './routes/productRoutes.js';
 import cartRouter from './routes/cartRoutes.js';
 import addressRouter from './routes/addressRoutes.js';
 import orderRouter from './routes/orderRoute.js';
+import { isAllowedOrigin } from './configs/runtime.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -18,13 +19,19 @@ await connectCloudinary()
 
 app.get('/', (req, res) => res.send("API is Working"));
 
-// Allow multiple origins
-const allowedOrigins = ['http://localhost:5173'];
-
 // Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true
+}));
 
 app.get('/',(req,res)=>res.send("API is working"))
 app.use('/api/user',userRouter)
@@ -34,6 +41,10 @@ app.use('/api/cart',cartRouter)
 app.use('/api/address',addressRouter)
 app.use('/api/order',orderRouter)
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
+}
+
+export default app;
